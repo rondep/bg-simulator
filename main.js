@@ -698,7 +698,7 @@ function showGallery() {
             if (minion["techLevel"] == selectedTier) {
                 var img = document.createElement('img');
                 //img.src = 'https://cards.hearthpwn.com/enUS/bgs/' + minion.normalId + '_bg.png';
-                img.src = 'cards/' + minion["name"] + suffix + '.png';
+                img.src = 'cards/resized/' + minion["name"] + suffix + '.png';
                 img.style = "width:100px";
                 img.classList.add("card");
                 //img.addEventListener("dragstart", dragStart);
