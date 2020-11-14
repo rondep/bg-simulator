@@ -1513,8 +1513,8 @@ function whenSthKills(X, Y) {
         switch (specialMinion.name) {
             case "Waxrider Togwaggle":
                 if (X.tribe.includes("dragon")) {
-                    specialMinion.attack += 2 * factor;
-                    specialMinion.health += 2 * factor;
+                    specialMinion.attack += 2 * (specialMinion.isGolden ? 2 : 1);
+                    specialMinion.health += 2 * (specialMinion.isGolden ? 2 : 1);
                 }
                 break;
         }
