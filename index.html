@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>BG Simulator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="style.css" rel="stylesheet">
+    <script src="minionInfo.js" defer></script>
+    <script src="main.js" defer></script>
+    <script src="simulation.js" defer></script>
+</head>
+
+<body ondragover="allowDrop(event)" onload="loadAllImages()" id="rest">
+    <div class="horizontal-flex">
+        <div class="controls">
+            <!--
+            <div class="introText">
+                <h2>BGs Fight Simulator</h2>
+                Build a board and simulate fights! Select minions below to drag on the board. 
+                To remove a minion, drag it back down. <br>
+                #Fights =
+                <input id="numSimul" class="inputs" value="10000">
+                <button type="button" id="sim_button" onclick="preSimulate()">Simulate</button>
+                <br>
+                <span id="sim_results">Nothing for now.</span>
+            </div>
+
+            <div>
+                Click to log an example fight.
+                <button type="button" onclick="logExampleWin()">Win</button>
+                <button type="button" onclick="logExampleTie()">Tie</button>
+                <button type="button" onclick="logExampleLoss()">Loss</button>
+            </div>
+        -->
+            <h2>BGs Fight Simulator</h2>
+            Build a board and simulate fights! Select minions below to drag on the board.
+            To remove a minion, drag it back down. Select the right stats and keywords on the board.<br>
+            <div>
+                <div id="sim_results">
+                    <h3>Simulate <input id="numSimul" class="inputs" value="10000"> Fights!
+                        <button type="button" id="sim_button" onclick="preSimulate()"
+                            style="font-size:20px; font-weight:bold;">Run Simulation</button> </h3>
+                    <br>
+
+                    <div id="outcome_container" class="horizontal-flex">
+                        Outcome
+                        <div id="win_outcome" class="outcome_box">
+                            <div class="outcome_header" id="win_header">
+                                Win
+                            </div>
+                            <div class="outcome_content" id="win_content">
+                                TBD
+                            </div>
+                        </div>
+                        <div id="tie_outcome" class="outcome_box float_left">
+                            <div class="outcome_header" id="tie_header">
+                                Tie
+                            </div>
+                            <div class="outcome_content" id="tie_content">
+                                TBD
+                            </div>
+                        </div>
+                        <div id="loss_outcome" class="outcome_box float_left">
+                            <div class="outcome_header" id="loss_header">
+                                Loss
+                            </div>
+                            <div class="outcome_content" id="loss_content">
+                                TBD
+                            </div>
+                        </div>
+
+                    </div><br>
+                    <div id="damage_container" class="horizontal-flex">
+                        Average Damage
+                        <div id="dealt_damage" class="damage_box">
+                            <div class="damage_header" id="dealt_header">
+                                Dealt
+                            </div>
+                            <div class="damage_content" id="dealt_content">
+                                TBD
+                            </div>
+                        </div>
+                        <div id="taken_damage" class="damage_box">
+                            <div class="damage_header" id="taken_header">
+                                Taken
+                            </div>
+                            <div class="damage_content" id="taken_content">
+                                TBD
+                            </div>
+                        </div>
+                    </div><br>
+                    <div id="lethal_container" class="horizontal-flex">
+                        Lethal
+                        <div id="opp_dies" class="lethal_box">
+                            <div class="lethal_header" id="opp_dies_header">
+                                Opp. dies
+                            </div>
+                            <div class="lethal_content" id="opp_dies_content">
+                                TBD
+                            </div>
+                        </div>
+                        <div id="you_die" class="lethal_box">
+                            <div class="lethal_header" id="you_die_header">
+                                You die
+                            </div>
+                            <div class="lethal_content" id="you_die_content">
+                                TBD
+                            </div>
+                        </div>
+                    </div><br>
+                    Show log of
+                    <button type="button" id="bc_button" onclick="showBC()">Best Case Scenario</button>
+                    <button type="button" id="wc_button" onclick="showWC()">Worst Case Scenario</button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="warbands unselectable">
+            <div class="warband">
+                <div id="hp_image_a"></div>
+                <div class="warband_side first_warband_side">
+                    <h3>Opponent</h3>
+                    <div class="hero_hp">
+                        <input class="cardInput" id="hero_hp_a" value="40" onchange="changeHeroHP('a')"> HP / Tavern
+                        <input class="cardInput" id="hero_tavern_a" value="6" onchange="changeTavern('a')">
+                        <br>Hero Power:
+                        <select id="hp_a" class="heropower_select" onchange="selectHP('a')">
+                            <option value="None">None</option>
+                            <!--<option value="Nefarian">Nefarian</option>-->
+                            <option value="Deathwing">Deathwing</option>
+                            <option value="Illidan Stormrage">Illidan</option>
+                        </select>
+                    </div>
+                    <div class="export">
+                        Input comp as string:
+                        <input id="import_a" class="exportInput">
+                        <button id="importButtonA" onclick="importComp('a')">Import</button><br>
+                        Copy comp string:
+                        <button id="exportA" onclick="exportComp('a')">Export</button>
+                    </div>
+                </div>
+                <div class="band first_band">
+                    <div class="spot wider" id="a0"></div>
+                    <div class="spot unselectable invisible" id="a1"></div>
+                    <div class="spot unselectable invisible" id="a2"></div>
+                    <div class="spot unselectable invisible" id="a3"></div>
+                    <div class="spot unselectable invisible" id="a4"></div>
+                    <div class="spot unselectable invisible" id="a5"></div>
+                    <div class="spot unselectable invisible" id="a6"></div>
+                    <div class="spot unselectable invisible" id="a7"></div>
+                    <div class="spot unselectable invisible" id="a8"></div>
+                    <div class="spot unselectable invisible" id="a9"></div>
+                    <div class="spot unselectable invisible" id="a10"></div>
+                    <div class="spot unselectable invisible" id="a11"></div>
+                    <div class="spot unselectable invisible" id="a12"></div>
+                    <div class="spot unselectable invisible" id="a13"></div>
+                    <div class="spot wider" id="a14"></div>
+                </div>
+            </div>
+            <div class="warband">
+                <div id="hp_image_b"></div>
+                <div class="warband_side">
+                    <h3>You</h3>
+                    <div class="hero_hp">
+                        <input class="cardInput" id="hero_hp_b" value="40" onchange="changeHeroHP('b')"> HP / Tavern
+                        <input class="cardInput" id="hero_tavern_b" value="6" onchange="changeTavern('b')">
+                        <br>Hero Power:
+                        <select id="hp_b" class="heropower_select" onchange="selectHP('b')">
+                            <option value="None">None</option>
+                            <!--<option value="Nefarian">Nefarian</option>-->
+                            <option value="Deathwing">Deathwing</option>
+                            <option value="Illidan Stormrage">Illidan</option>
+                        </select>
+                    </div>
+                    <div class="export">
+                        Input comp as string:
+                        <input id="import_b" class="exportInput">
+                        <button id="importButtonB" onclick="importComp('b')">Import</button><br>
+                        Copy comp string:
+                        <button id="exportB" onclick="exportComp('b')">Export </button>
+                    </div>
+                </div>
+                <div class="band">
+                    <div class="spot wider" id="b0"></div>
+                    <div class="spot unselectable invisible" id="b1"></div>
+                    <div class="spot unselectable invisible" id="b2"></div>
+                    <div class="spot unselectable invisible" id="b3"></div>
+                    <div class="spot unselectable invisible" id="b4"></div>
+                    <div class="spot unselectable invisible" id="b5"></div>
+                    <div class="spot unselectable invisible" id="b6"></div>
+                    <div class="spot unselectable invisible" id="b7"></div>
+                    <div class="spot unselectable invisible" id="b8"></div>
+                    <div class="spot unselectable invisible" id="b9"></div>
+                    <div class="spot unselectable invisible" id="b10"></div>
+                    <div class="spot unselectable invisible" id="b11"></div>
+                    <div class="spot unselectable invisible" id="b12"></div>
+                    <div class="spot unselectable invisible" id="b13"></div>
+                    <div class="spot wider" id="b14"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="horizontal-flex unselectable">
+            <div id="gallery_box">
+                <form>
+                    <input type="radio" class="tierButton" name="tier" id="tier1" onclick="showTier(1)"
+                        checked="checked">1</button><br>
+                    <input type="radio" class="tierButton" name="tier" id="tier2" onclick="showTier(2)">2</button><br>
+                    <input type="radio" class="tierButton" name="tier" id="tier3" onclick="showTier(3)">3</button><br>
+                    <input type="radio" class="tierButton" name="tier" id="tier4" onclick="showTier(4)">4</button><br>
+                    <input type="radio" class="tierButton" name="tier" id="tier5" onclick="showTier(5)">5</button><br>
+                    <input type="radio" class="tierButton" name="tier" id="tier6" onclick="showTier(6)">6</button>
+                </form>
+                Golden <input type="checkbox" class="tierButton" id="goldenButton" onclick="showGallery()">
+            </div>
+
+            <div id="gallery" class="unselectable float_left">
+
+            </div>
+        </div>
+
+
+    </div>
+
+    <div id="bestModal" class="modal">
+        <div class="modal-content" id="best_modal_text">
+
+        </div>
+    </div>
+    <div id="worstModal" class="modal">
+        <div class="modal-content" id="worst_modal_text">
+
+        </div>
+    </div>
+    <!--
+    <div class="footer"> All cards are Copyright © Blizzard Entertainment.
+        This website is not affiliated with Blizzard Entertainment. </div>
+    -->
+</body>
+
+</html>

@@ -1,0 +1,305 @@
+.footer{ 
+    position: fixed;     
+    text-align: center;    
+    bottom: 0px; 
+    width: 100%;
+    font-size: xx-small;
+}  
+
+/*.introText{
+    text-align: center;
+}*/
+
+body {
+    margin: 0;
+    font-family: Helvetica;
+  }
+.warband{
+    /*width: 50%;*/
+    /*margin: 0 auto;*/
+    /*width: 90%;*/
+    display: flex;
+    /*text-align: center;
+    /*flex-direction: row;*/
+    /*background-color: powderblue;*/
+    align-items: center;
+    justify-content: center;
+    /*background-color: transparent;*/
+    /*margin: 1rem;*/
+}
+
+.warband_side{
+    background-color: lightgray;
+    height: 270px;
+    border: solid black 2px;
+    padding: 5px;
+}
+
+.first_warband_side{
+    border-bottom: 0;
+}
+
+.spot{
+    width: 74px;
+    height: 280px;
+    flex: initial;
+    /*border: 1px solid black;*/
+    background-color: transparent;
+    /*background-color: powderblue;*/
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/*.wider{
+    width:100px;
+}*/
+
+.band{
+    border: 2px solid #5F3926;
+    margin: 0 auto;
+    display: flex;
+    background-color: #C4905E;
+    align-items: center;
+    justify-content: center;
+}
+
+.first_band{
+    border-bottom: 0;
+}
+
+/*.spot img {
+    pointer-events: none
+}*/
+
+.invisible{
+    pointer-events: none;
+}
+
+.visible{
+    pointer-events: all;
+}
+
+/*.card {
+    -moz-user-select: -moz-none;
+    -khtml-user-select: none;
+    -webkit-user-select: none;
+    -o-user-select: none;
+    user-select: none;
+}*/
+
+img {
+    -khtml-user-select: none;
+    -o-user-select: none;
+    -moz-user-select: none;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+.inputs{
+    width:60px;
+}
+
+.column{
+    height:100%;
+    width:100%;
+}
+
+.unselectable{
+    user-select: none;
+    -moz-user-select: none;
+    -webkit-user-drag: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
+
+canvas {
+    position: absolute;
+    margin-left: 8px;
+}
+
+.outer{
+    display: flex;
+    flex-direction: column;
+}
+.data{
+    width: 140px;
+    margin-top: 195px;
+    /*margin-left: 5px;
+    margin-right: 5px;*/
+    /*margin-left: 5px;
+    margin-right: 5px;*/
+    padding: 1px;
+    background-color:#d8c1ab;
+    font-size: x-small;
+    text-align: center;
+    border-radius: 10px;
+}
+.cardInput{
+    /* float:left;*/
+     width:22px;
+     text-align: center;
+     font-weight: bold;
+ }
+ 
+ .cardInput2{
+     width:10px;
+     text-align: center;
+ }
+ 
+ .export{  
+     margin-top: 100px;
+ }
+
+ .heropowers{
+   /* margin-top: 30px;
+    margin-left: 30px;
+    margin-right: 30px;*/
+    width: 200px;
+ }
+ 
+ .hero_hp{
+    /*margin-left: 30px;
+    margin-right: 30px;*/
+    width: 200px;
+ }
+
+ .exportInput{
+     width: 120px;
+ }
+
+
+ .horizontal-flex{
+     display:flex;
+ }
+
+ .controls{
+     background-color: beige;
+     padding: 5px;
+ }
+
+ h3 {text-align: center;}
+
+ #gallery_box {
+     padding: 5px;
+     /*width: 120px;*/
+     background-color: gainsboro;
+     font-size: 16px;
+     /*float:left;*/
+     float: left;
+    flex-basis: 90px;
+    flex-grow: 0;
+    flex-shrink: 0;
+ }
+/*
+ #gallery{
+ }
+*/
+
+#gallery{
+    display:flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+
+ .float_left {
+    float: left;
+ }
+
+ .tierButton {
+    width: 20px;
+    height:20px;
+ }
+
+ .heropower_select{
+     width:100px;
+ }
+
+ img { /* actually helps for gallery, but on warband it's canvases not img*/
+    image-rendering: -moz-crisp-edges;
+    image-rendering:   -o-crisp-edges;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;
+  }
+/*
+  canvas {        
+    image-rendering: -moz-crisp-edges;         
+    image-rendering: -webkit-optimize-contrast; 
+    image-rendering: -o-crisp-edges;          
+    image-rendering: crisp-edges;
+    -ms-interpolation-mode: nearest-neighbor;  
+  }*/
+
+  #sim_results{
+      background-color: lightblue;
+      border-radius: 20px;
+      padding: 10px;
+      margin-top: 20px;
+  }
+
+  #outcome_container, #damage_container, #lethal_container {
+    align-items: center;
+  }
+
+  .outcome_box, .damage_box, .lethal_box{
+      background-color: rgb(255, 255, 255);
+      padding: 5px;
+      width: 70px;
+      border: solid rgb(3, 0, 0) 1px;
+  }
+
+  #win_outcome, #dealt_damage, #opp_dies{
+    margin-left: 20px;
+    border-right: 0;
+  }
+
+  #tie_outcome {
+      border-right: 0;
+  }
+
+  .outcome_header, .damage_header, .lethal_header{
+      font-size: small;
+      text-align: center;
+      /*margin: 5 auto;*/
+  }
+
+  .outcome_content, .damage_content, .lethal_content{
+      margin-top: 10px;
+      text-align: center;
+      font-weight: bold;
+  }
+
+ .modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    padding-left: 400px;
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  }
+  
+ .modal-content {
+    background-color: #fefefe;
+    width: 70%;
+    height: 80%;
+    overflow: scroll;
+    padding: 10px;
+    font-size: small;
+  }
+
+  img, canvas {
+      cursor: pointer;
+  }
+/*
+  img:active {
+    cursor: pointer;
+}*/
