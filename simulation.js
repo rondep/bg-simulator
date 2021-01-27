@@ -323,6 +323,18 @@ function Warband(health, tavern, heroPower) {
         }
         return dmg;
     }
+    // Returns a list of alive elistras on this warband.
+    this.findElistras = function () {
+        var elistras = [];
+        var currNode = this.head;
+        while (currNode != null) {
+            if (currNode.status == "alive" && currNode.name == "Elistra the Immortal") {
+                elistras.push(currNode);
+            }
+            currNode = currNode.next;
+        }
+        return elistras;
+    }
 
 }
 
@@ -401,9 +413,13 @@ window.onclick = function (event) {
         modal.style.display = "none";
     }*/
     var bestModal = document.getElementById("bestModal");
+    var tieModal = document.getElementById("tieModal");
     var worstModal = document.getElementById("worstModal");
     if (event.target == bestModal) {
         bestModal.style.display = "none";
+    }
+    if (event.target == tieModal) {
+        tieModal.style.display = "none";
     }
     if (event.target == worstModal) {
         worstModal.style.display = "none";
@@ -411,12 +427,22 @@ window.onclick = function (event) {
 }
 
 function showBC() {
+    if (bestLog == undefined) return;
     document.getElementById("best_modal_text").innerHTML = "";
     document.getElementById("best_modal_text").innerHTML = "<b>Best case scenario:</b><br>" + bestLog.replaceAll("\n", "<br>");
     document.getElementById("bestModal").style.display = "block";
 }
 
+function showTie() {
+    if (tieLog == undefined) return;
+    document.getElementById("tie_modal_text").innerHTML = "";
+    var text = tieLog == "" ? "<br>No ties happened." : tieLog.replaceAll("\n", "<br>");
+    document.getElementById("tie_modal_text").innerHTML = "<b>Example Tie:</b><br>" + text;
+    document.getElementById("tieModal").style.display = "block";
+}
+
 function showWC() {
+    if (worstLog == undefined) return;
     document.getElementById("worst_modal_text").innerHTML = "";
     document.getElementById("worst_modal_text").innerHTML = "<b>Worst case scenario:</b><br>" + worstLog.replaceAll("\n", "<br>");
     document.getElementById("worstModal").style.display = "block";
@@ -560,6 +586,7 @@ function simulate() {
         currentLog += "Result: ";
         if (result == 1) {
             currentLog += " Tie.";
+            if (tieLog == "") tieLog = currentLog;
         } else if (result == 0) {
             currentLog += " You won and dealt " + dmgB + " damage.";
             if (diedA) currentLog += " (Lethal)";
@@ -736,6 +763,12 @@ function runSimulation() {
         //if (firstFight) console.log(turn + " is attacking: " + hitter.name + " -> " + target.name);
         whenAttack(hitter, target);
         whenSthAttacks(hitter);
+
+        // But the attack may not go through because of elistra!
+        // Elistra assumption: When a taunt minion is attacked, an uniformly random elistra gets attacked instead
+        var defenderElistras = defender.findElistras();
+        if (defenderElistras.length > 0 && target.hasTaunt) target = randomEntry(defenderElistras);
+
         hitSimultaneously(hitter, target);
         // better to trigger overkills here than in hit, because overkill only triggers on attacks
         if (target.health < 0) whenOverkill(hitter, target);
@@ -1222,17 +1255,21 @@ function deathrattle(minion) {
             var num = 3;
             while (num--) minionsToSummon.unshift(new Minion("Token", false, minion.side, 1 * factor, 3 * factor, "demon", true, false, false, false, false, 0, 0));
             break;
+        case "Ring Matron":
+            var num = 2;
+            while (num--) minionsToSummon.unshift(new Minion("Token", false, minion.side, 3 * factor, 2 * factor, "demon", false, false, false, false, false, 0, 0));
+            break;
         case "Infested Wolf":
             var num = 2;
-            while (num--) minionsToSummon.unshift(new Minion("Token", false, minion.side, 1 * factor, 1 * factor, "beast", true, false, false, false, false, 0, 0));
+            while (num--) minionsToSummon.unshift(new Minion("Token", false, minion.side, 1 * factor, 1 * factor, "beast", false, false, false, false, false, 0, 0));
             break;
         case "Savannah Highmane":
             var num = 2;
-            while (num--) minionsToSummon.unshift(new Minion("Token", false, minion.side, 2 * factor, 2 * factor, "beast", true, false, false, false, false, 0, 0));
+            while (num--) minionsToSummon.unshift(new Minion("Token", false, minion.side, 2 * factor, 2 * factor, "beast", false, false, false, false, false, 0, 0));
             break;
         case "Rat Pack":
             var num = Math.min(minion.attack, 7);
-            while (num--) minionsToSummon.unshift(new Minion("Token", false, minion.side, 1 * factor, 1 * factor, "beast", true, false, false, false, false, 0, 0));
+            while (num--) minionsToSummon.unshift(new Minion("Token", false, minion.side, 1 * factor, 1 * factor, "beast", false, false, false, false, false, 0, 0));
             break;
         // HANDLE THIS CASE SEPARATELY (i.e. summon # Khadgar many einhorns) as this is the only minion summoning stuff for the opponent
         case "The Beast":
@@ -1437,6 +1474,11 @@ function whenSthSummoned(minion) {
                     specialMinion.attack += specialMinion.isGolden ? 2 : 1;
                 }
                 break;
+            case "Bigfernal":
+                if (minion.tribe.includes("demon") && minion != specialMinion) {
+                    specialMinion.attack += specialMinion.isGolden ? 2 : 1;
+                    specialMinion.health += specialMinion.isGolden ? 2 : 1;
+                }
         }
     }
 
@@ -1529,6 +1571,7 @@ function whenSthDies(minion) {
     var factor = minion.isGolden ? 2 : 1;
 
     for (var specialMinion of myBand.specialMinions) {
+        var specialFactor = specialMinion.isGolden ? 2 : 1;
         switch (specialMinion.name) {
             case "Soul Juggler":
                 if (specialMinion.health > 0 && minion.tribe.includes("demon")) {
@@ -1553,7 +1596,15 @@ function whenSthDies(minion) {
                 break;
             case "Old Murk-Eye":
                 if (minion.tribe.includes("murloc") && minion != specialMinion) {
-                    specialMinion.attack -= specialMinion.isGolden ? 2 : 1;
+                    specialMinion.attack -= specialFactor;
+                }
+                break;
+            case "Qiraji Harbinger":
+                if (minion.hasTaunt && minion != specialMinion) { // dying qiraji doesn't buff (?)
+                    for (var neighbor of myBand.neighbors(minion)) {
+                        neighbor.attack += 2 * specialFactor;
+                        neighbor.health += 2 * specialFactor;
+                    }
                 }
                 break;
         }
@@ -1606,7 +1657,7 @@ function whenDamaged(minion) {
             summon(minionsToSummon, minion);
             break;
         case "Security Rover":
-            minionsToSummon.push(new Minion("Token", false, minion.side, 2 * factor, 3 * factor, "mechanical", false, false, false, false, false, 0, 0));
+            minionsToSummon.push(new Minion("Token", false, minion.side, 2 * factor, 3 * factor, "mechanical", true, false, false, false, false, 0, 0));
             summon(minionsToSummon, minion);
             break;
         case "Imp Mama":
@@ -1636,6 +1687,29 @@ function whenAttack(X, Y) {
             X.attack = Math.min(X.attack * multiplier, maxAttack);
             break;
     }
+
+    // handle stuff that triggers when a taunt gets attacked
+    if (Y.hasTaunt) {
+        for (var specialMinion of theirBand.specialMinions) {
+            var factor = specialMinion.isGolden ? 2 : 1;
+            switch (specialMinion.name) {
+                case "Arm of the Empire":
+                    Y.attack += 3 * factor;
+                    break;
+                case "Champion of Y'Shaarj":
+                    specialMinion.attack += 1 * factor;
+                    specialMinion.health += 1 * factor;
+                    break;
+                case "Tormented Ritualist":
+                    for (var neighbor of theirBand.neighbors(Y)) {
+                        neighbor.attack += 1 * factor;
+                        neighbor.health += 1 * factor;
+                    }
+                    break;
+            }
+        }
+    }
+
 
 }
 
