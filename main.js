@@ -39,7 +39,8 @@ for (var i = 0; i < minions.length; i++) {
 }
 
 tauntNames = [];
-tauntExceptions = ["Houndmaster", "Defender of Argus", "Strongshell Scavenger", "Security Rover", "Imp Mama"];
+tauntExceptions = ["Houndmaster", "Defender of Argus", "Strongshell Scavenger", "Security Rover", "Imp Mama", 
+                    "Qiraji Harbinger", "Champion of Y'Shaarj", "Arm of the Empire", "Elistra the Immortal"];
 for (var i = 0; i < minions.length; i++) {
     if (minions[i]["normalText"].toLowerCase().includes("taunt") && !tauntExceptions.includes(minions[i]["name"])) {
         tauntNames.push(minions[i].name);
@@ -63,12 +64,12 @@ for (var i = 0; i < minions.length; i++) {
 }
 
 poisonNames = ["Deadly Spore", "Maexxna"];
-rebornNames = ["Bronze Warden", "Micro Mummy"];
+rebornNames = ["Bronze Warden", "Micro Mummy", "Acolyte of C'Thun", "Elistra the Immortal"];
 
-onSummonMinions = ["Murloc Tidecaller", "Pack Leader", "Deflect-o-Bot", "Mama Bear"];
-onAttackMinions = ["Ripsnarl Captain", "Dread Admiral Eliza"];
+onSummonMinions = ["Murloc Tidecaller", "Pack Leader", "Deflect-o-Bot", "Mama Bear", "Bigfernal"];
+onAttackMinions = ["Ripsnarl Captain", "Dread Admiral Eliza", "Tormented Ritualist", "Arm of the Empire", "Champion of Y'Shaarj"];
 onDSLossMinions = ["Bolvar, Fireblood", "Drakonid Enforcer"];
-onDeathMinions = ["Scavenging Hyena", "Soul Juggler", "Junkbot"];
+onDeathMinions = ["Scavenging Hyena", "Soul Juggler", "Junkbot", "Qiraji Harbinger"];
 onKillMinions = ["Waxrider Togwaggle"];
 auraMinions = ["Murloc Warleader", "Old Murk-Eye", "Southsea Captain", "Siegebreaker", "Mal'Ganis", "Khadgar", "Baron Rivendare"]
 specialMinions = onSummonMinions.concat(onAttackMinions, onDSLossMinions, onDeathMinions, onKillMinions, auraMinions);
@@ -669,26 +670,26 @@ function showGallery() {
     var elem = document.getElementById("gallery_box");
     elem.style.width = "100px";
 
-/*
-    // Add all images of minions of this tier
-    for (var i = 0; i < minions.length; i++) {
-        var minion = minions[i];
-        if (minion["techLevel"] == selectedTier) {
-            img = document.createElement('img');
-            //img.src = 'https://cards.hearthpwn.com/enUS/bgs/' + minion.normalId + '_bg.png';
-            img.src = 'cards/' + minion["name"] + suffix + '.png';
-            img.style = "width:100px";
-            img.classList.add("card");
-            //img.addEventListener("dragstart", dragStart);
-            registerImage(img);
-            img.id = "gallery " + minion["name"] + suffix;
-            gallery.appendChild(img);
+    /*
+        // Add all images of minions of this tier
+        for (var i = 0; i < minions.length; i++) {
+            var minion = minions[i];
+            if (minion["techLevel"] == selectedTier) {
+                img = document.createElement('img');
+                //img.src = 'https://cards.hearthpwn.com/enUS/bgs/' + minion.normalId + '_bg.png';
+                img.src = 'cards/' + minion["name"] + suffix + '.png';
+                img.style = "width:100px";
+                img.classList.add("card");
+                //img.addEventListener("dragstart", dragStart);
+                registerImage(img);
+                img.id = "gallery " + minion["name"] + suffix;
+                gallery.appendChild(img);
+            }
         }
-    }
-*/
+    */
     var tags = ["Beast", "Demon", "Dragon", "Elemental", "Mech", "Murloc", "Pirate", "Rest"];
     var tribeMinions = findMinions(selectedTier);
-    for (var tribe = 0; tribe < 8; tribe++){
+    for (var tribe = 0; tribe < 8; tribe++) {
         if (tribeMinions[tribe].length == 0) continue;
         var node = document.createTextNode(tags[tribe]);
         gallery.appendChild(node);
@@ -901,3 +902,25 @@ function changeTavern(band) {
     elem.value = finalValue;
 
 }
+
+/*
+// return the odds to go 12 wins in arena determined using numSimul simulations
+function arenaSim(numSimul) {
+    var prob = 0;
+    for (var i = 0; i < numSimul; i++) {
+        var numWins = 0;
+        var numLosses = 0;
+        while (numWins < 12 && numLosses < 3) {
+            if (randomInt(2) == 0) {
+                numWins++;
+            } else {
+                numLosses++;
+            }
+            if (numWins == 12) prob++;
+        }
+    }
+    prob /= numSimul;
+    console.log(100*prob);
+    return 100*prob;
+}
+*/
