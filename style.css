@@ -148,10 +148,11 @@ canvas {
      text-align: center;
  }
  
+ /*
  .export{  
      margin-top: 100px;
  }
-
+*/
  .heropowers{
    /* margin-top: 30px;
     margin-left: 30px;
@@ -163,10 +164,11 @@ canvas {
     /*margin-left: 30px;
     margin-right: 30px;*/
     width: 200px;
+    height: 190px;
  }
 
  .exportInput{
-     width: 120px;
+     width: 70px;
  }
 
 
@@ -188,7 +190,7 @@ canvas {
      font-size: 16px;
      /*float:left;*/
      float: left;
-    flex-basis: 90px;
+    flex-basis: 120px;
     flex-grow: 0;
     flex-shrink: 0;
  }
