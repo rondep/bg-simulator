@@ -259,9 +259,15 @@ function removeMinion(band, ind) {
         var currElem = document.getElementById(band + i);
         var nextElem = document.getElementById(band + (i + 1));
         var child = currElem.children[0];
+        // console.log("The old old child is: " + child.id);
         currElem.removeChild(child);
         nextElem.appendChild(child);
-        child.id = band + (i + 1) + ' ' + afterSpace(child.id);
+        // console.log("The old child is: " + child.id);
+        // console.log("currelem= " + currElem.id);
+        // console.log("nextelem = " + nextElem.id);
+        child.children[0].id = band + (i + 1) + ' ' + afterSpace(child.children[0].id);
+        //console.log("The updated index is " + (i+1));
+        // console.log("The updated id is: " + child.id);
     }
     for (var i = ind + 2; i <= topInd; i += 2) {
         var currElem = document.getElementById(band + i);
@@ -269,7 +275,7 @@ function removeMinion(band, ind) {
         var child = currElem.children[0];
         currElem.removeChild(child);
         prevElem.appendChild(child);
-        child.id = band + (i - 1) + ' ' + afterSpace(child.id);
+        child.children[0].id = band + (i - 1) + ' ' + afterSpace(child.children[0].id);
     }
     if (band == 'a') {
         numA--;
@@ -375,7 +381,7 @@ function dragLeave(event) {
 function drop(event) {
 
 
-    console.log("in drop");
+    //console.log("in drop");
 
 
     event.preventDefault();
@@ -384,8 +390,8 @@ function drop(event) {
     var dropInd = parseInt(dropId.slice(1));
     var dragId = event.dataTransfer.getData("parent");
     var dragInd = parseInt(dragId.slice(1));
-    console.log("Drag Id = " + dragId);
-     console.log("Drop Id = " + dropId);
+    //console.log("Drag Id = " + dragId);
+     //console.log("Drop Id = " + dropId);
     //console.log("Drag content = " + dragContent);
 
     var dragged_card;
