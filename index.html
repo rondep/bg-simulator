@@ -36,7 +36,7 @@
         -->
             <h2>BGs Fight Simulator</h2>
             Build a board and simulate fights! Select minions below to drag on the board.
-            To remove a minion, drag it back down. Select the right stats and keywords on the board.<br>
+            To remove a minion, drag it back down. Choose the right position, stats and keywords on the board.<br>
             <div>
                 <div id="sim_results">
                     <h3>Simulate <input id="numSimul" class="inputs" value="10000"> Fights!
@@ -135,13 +135,15 @@
                             <!--<option value="Nefarian">Nefarian</option>-->
                             <option value="Deathwing">Deathwing</option>
                             <option value="Illidan Stormrage">Illidan</option>
+                            <option value="Greybough">Greybough</option>
+                            <option value="Y'Shaarj">Y'Shaarj</option>
+                            <option value="Akazamzarak">Akazamzarak</option>
                         </select>
+                        <div id="secrets_a"></div>
                     </div>
                     <div class="export">
-                        Input comp as string:
                         <input id="import_a" class="exportInput">
-                        <button id="importButtonA" onclick="importComp('a')">Import</button><br>
-                        Copy comp string:
+                        <button id="importButtonA" onclick="importComp('a')">Import</button>
                         <button id="exportA" onclick="exportComp('a')">Export</button>
                     </div>
                 </div>
@@ -176,13 +178,15 @@
                             <!--<option value="Nefarian">Nefarian</option>-->
                             <option value="Deathwing">Deathwing</option>
                             <option value="Illidan Stormrage">Illidan</option>
+                            <option value="Greybough">Greybough</option>
+                            <option value="Y'Shaarj">Y'Shaarj</option>
+                            <option value="Akazamzarak">Akazamzarak</option>
                         </select>
+                        <div id="secrets_b"></div>
                     </div>
                     <div class="export">
-                        Input comp as string:
                         <input id="import_b" class="exportInput">
-                        <button id="importButtonB" onclick="importComp('b')">Import</button><br>
-                        Copy comp string:
+                        <button id="importButtonB" onclick="importComp('b')">Import</button>
                         <button id="exportB" onclick="exportComp('b')">Export </button>
                     </div>
                 </div>
@@ -208,7 +212,7 @@
     </div>
 
     <div>
-        <div class="horizontal-flex unselectable">
+        <div class="horizontal-flex unselectable" id="gallery_container">
             <div id="gallery_box">
                 <form>
                     <input type="radio" class="tierButton" name="tier" id="tier1" onclick="showTier(1)"
@@ -220,10 +224,21 @@
                     <input type="radio" class="tierButton" name="tier" id="tier6" onclick="showTier(6)">6</button>
                 </form>
                 Golden <input type="checkbox" class="tierButton" id="goldenButton" onclick="showGallery()">
+                <br><br>
+                Available Tribes:<br>
+                <form>
+                    <input type="checkbox" class="tribeButton" checked="true" id="tribe_Beast" onclick="showGallery()">Beast</button><br>
+                    <input type="checkbox" class="tribeButton" checked="true" id="tribe_Demon" onclick="showGallery()">Demon</button><br>
+                    <input type="checkbox" class="tribeButton" checked="true" id="tribe_Dragon" onclick="showGallery()">Dragon</button><br>
+                    <input type="checkbox" class="tribeButton" checked="true" id="tribe_Elemental" onclick="showGallery()">Elemental</button><br>
+                    <input type="checkbox" class="tribeButton" checked="true" id="tribe_Mech" onclick="showGallery()">Mech</button><br>
+                    <input type="checkbox" class="tribeButton" checked="true" id="tribe_Murloc" onclick="showGallery()">Murloc</button><br>
+                    <input type="checkbox" class="tribeButton" checked="true" id="tribe_Pirate" onclick="showGallery()">Pirate</button><br>
+                </form>
             </div>
 
             <div id="gallery" class="unselectable float_left">
-
+                <br> <br> <br> <br> <br> <br> <br> <br>
             </div>
         </div>
 
