@@ -4,6 +4,7 @@ var numB = 0;
 var M = new Map(); // maps card names to their json entry
 var selectedTier = 1;
 var canvasVariable;
+var tags = ["Beast", "Demon", "Dragon", "Elemental", "Mech", "Murloc", "Pirate", "Rest"];
 
 for (var i = 0; i < minions.length; i++) {
     M.set(minions[i]["name"], minions[i]);
@@ -39,8 +40,8 @@ for (var i = 0; i < minions.length; i++) {
 }
 
 tauntNames = [];
-tauntExceptions = ["Houndmaster", "Defender of Argus", "Strongshell Scavenger", "Security Rover", "Imp Mama", 
-                    "Qiraji Harbinger", "Champion of Y'Shaarj", "Arm of the Empire", "Elistra the Immortal"];
+tauntExceptions = ["Houndmaster", "Defender of Argus", "Strongshell Scavenger", "Security Rover", "Imp Mama",
+    "Qiraji Harbinger", "Champion of Y'Shaarj", "Arm of the Empire", "Elistra the Immortal"];
 for (var i = 0; i < minions.length; i++) {
     if (minions[i]["normalText"].toLowerCase().includes("taunt") && !tauntExceptions.includes(minions[i]["name"])) {
         tauntNames.push(minions[i].name);
@@ -55,11 +56,13 @@ for (var i = 0; i < minions.length; i++) {
     }
 }
 
-deathrattleNames = []; // no exclude coiler
-deathrattleExceptions = ["Ghastcoiler", "Baron Rivendare", "Rabid Saurolisk", "Monstrous Macaw"]
+deathrattleNames = []; // excludes coiler (to be used in coiler's DR)
+allDeathrattleNames = ["Ghastcoiler"] // also includes coiler
+deathrattleExceptions = ["Ghastcoiler", "Baron Rivendare", "Rabid Saurolisk", "Monstrous Macaw", "Fish of N'Zoth"]
 for (var i = 0; i < minions.length; i++) {
     if (minions[i]["normalText"].toLowerCase().includes("deathrattle") && !deathrattleExceptions.includes(minions[i]["name"])) {
         deathrattleNames.push(minions[i].name);
+        allDeathrattleNames.push(minions[i].name);
     }
 }
 
@@ -74,6 +77,8 @@ onKillMinions = ["Waxrider Togwaggle"];
 auraMinions = ["Murloc Warleader", "Old Murk-Eye", "Southsea Captain", "Siegebreaker", "Mal'Ganis", "Khadgar", "Baron Rivendare"]
 specialMinions = onSummonMinions.concat(onAttackMinions, onDSLossMinions, onDeathMinions, onKillMinions, auraMinions);
 
+uncollectibleMinions = ["Amalgam", "Fish of N'Zoth"];
+
 windfuryNames = ["Crackling Cyclone", "Seabreaker Goliath", "Zapp Slywick"];
 
 twoManaCards = [];
@@ -81,8 +86,9 @@ for (var i = 0; i < minions.length; i++) {
     if (minions[i]["manacost"] == 2) twoManaCards.push(minions[i].name);
 }
 legendaryCards = [];
+legendaryExceptions = ["Sneed's Old Shredder", "Fish of N'Zoth"];
 for (var i = 0; i < minions.length; i++) {
-    if (minions[i]["rarity"] == "LEGENDARY" && minions[i].name != "Sneed's Old Shredder") legendaryCards.push(minions[i].name);
+    if (minions[i]["rarity"] == "LEGENDARY" && !legendaryExceptions.includes(minions[i].name)) legendaryCards.push(minions[i].name);
 }
 
 function showTier(tier) {
@@ -294,12 +300,13 @@ spots.forEach(elem => {
     elem.addEventListener("drop", drop);
     // need to be careful not the have two event listeners for spots if the body also gets one
 });
-document.getElementById("gallery").addEventListener("drop", drop);
+//document.getElementById("gallery").addEventListener("drop", drop); // only need to add a listener for the outer div, otherwise the inner one gets it multiple times
+document.getElementById("gallery_container").addEventListener("drop", drop);
 //document.getElementById("rest").addEventListener("drop", drop);
 
 function allowDrop(ev) {
     ev.preventDefault();
-}
+}    
 
 function dragStart(event) {
     //console.log("drag start");
@@ -368,7 +375,7 @@ function dragLeave(event) {
 function drop(event) {
 
 
-    //console.log("in drop");
+    console.log("in drop");
 
 
     event.preventDefault();
@@ -377,8 +384,8 @@ function drop(event) {
     var dropInd = parseInt(dropId.slice(1));
     var dragId = event.dataTransfer.getData("parent");
     var dragInd = parseInt(dragId.slice(1));
-    //console.log("Drag Id = " + dragId);
-    // console.log("Drop Id = " + dropId);
+    console.log("Drag Id = " + dragId);
+     console.log("Drop Id = " + dropId);
     //console.log("Drag content = " + dragContent);
 
     var dragged_card;
@@ -393,7 +400,7 @@ function drop(event) {
     }
     //console.log(moreLeft);
 
-    if (dropId == "gallery") {
+    if (dropId == "gallery" || dropId == "gallery_container") {
         if (dragId.charAt(0) == 'a') {
             removeMinion('a', dragInd);
         } else if (dragId.charAt(0) == 'b') {
@@ -687,10 +694,9 @@ function showGallery() {
             }
         }
     */
-    var tags = ["Beast", "Demon", "Dragon", "Elemental", "Mech", "Murloc", "Pirate", "Rest"];
     var tribeMinions = findMinions(selectedTier);
     for (var tribe = 0; tribe < 8; tribe++) {
-        if (tribeMinions[tribe].length == 0) continue;
+        if (tribeMinions[tribe].length == 0 || (tags[tribe] != "Rest" && !document.getElementById("tribe_" + tags[tribe]).checked)) continue;
         var node = document.createTextNode(tags[tribe]);
         gallery.appendChild(node);
         //gallery.innerHTML += tags[tribe];
@@ -700,7 +706,7 @@ function showGallery() {
                 var img = document.createElement('img');
                 //img.src = 'https://cards.hearthpwn.com/enUS/bgs/' + minion.normalId + '_bg.png';
                 img.src = 'cards/resized/' + minion["name"] + suffix + '.png';
-                img.style = "width:100px";
+                img.style = "width:110px";
                 img.classList.add("card");
                 //img.addEventListener("dragstart", dragStart);
                 registerImage(img);
@@ -720,8 +726,11 @@ function findTribeMinions(tribe_orig, tribe, tier) { // tribe_orig is only diffe
         var minion = minions[i];
         var race = minion.race.toLowerCase();
         if (minion.techLevel != tier) continue;
-        if (race == tribe_orig.toLowerCase()
-            || minion.normalText.toLowerCase().includes(tribe.toLowerCase())) res.push(minion);
+        if ((race == tribe_orig.toLowerCase()
+            || minion.normalText.toLowerCase().includes(tribe.toLowerCase())) && minion.name != "Fish of N'Zoth") {
+            res.push(minion);
+            minion["tribePool"] = tribe;
+        }
         //console.log(res);
     }
     return res;
@@ -852,12 +861,28 @@ function selectHP(band) {
             filler.style = "width:170px";
             otherImageElem.appendChild(filler);
         }
+
     } else {
         if (otherImageElem.children.length > 0) {
             var filler = document.createElement("div");
             filler.style = "width:170px";
             imageElem.appendChild(filler);
         }
+    }
+
+    // handle secrets
+    var elem = document.getElementById("secrets_" + band);
+    if (heroName == "Akazamzarak") {
+        var moreHTML = "";
+        moreHTML += "<br><form><input type=\"checkbox\" class=\"secretButton\" id=\"secret1\" value=\"Autodefense Matrix\">Autodefense Matrix</button><br>";
+        moreHTML += "<input type=\"checkbox\" class=\"secretButton\" id=\"secret2\" value=\"Avenge\">Avenge</button><br>";
+        moreHTML += "<input type=\"checkbox\" class=\"secretButton\" id=\"secret3\" value=\"Redemption\">Redemption</button><br>";
+        moreHTML += "<input type=\"checkbox\" class=\"secretButton\" id=\"secret4\" value=\"Snake Trap\">Snake Trap</button><br>";
+        moreHTML += "<input type=\"checkbox\" class=\"secretButton\" id=\"secret5\" value=\"Venomstrike Trap\">Venomstrike Trap</button><br>";
+        moreHTML += "<input type=\"checkbox\" class=\"secretButton\" id=\"secret6\" value=\"Splitting Image\">Splitting Image</button><br></form>";
+        elem.innerHTML = moreHTML;
+    } else {
+        elem.innerHTML = "";
     }
 
     if (heroName == "None" && document.getElementById("hp_" + otherBand).value == "None") {
@@ -878,7 +903,7 @@ function changeHeroHP(band) {
         finalValue = defaultValue;
     } else {
         finalValue = Math.max(value, 1);
-        finalValue = Math.min(finalValue, 50);
+        finalValue = Math.min(finalValue, 55);
         finalValue = Math.floor(finalValue);
     }
     elem.value = finalValue;
