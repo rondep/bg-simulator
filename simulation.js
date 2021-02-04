@@ -1,15 +1,17 @@
-var A, B, firstFight, turn, attacker, defender;
+var inputA, inputB, A, B, firstFight, turn, attacker, defender;
 var winLog, tieLog, lossLog, bestLog, worstLog, currentLog;
 var diedA, diedB, dmgA, dmgB, bestSignedDmg, worstSignedDmg;
 
-function Warband(health, tavern, heroPower) {
+function Warband(health, tavern, heroPower, secrets) {
     this.health = parseFloat(health);
     this.tavern = parseFloat(tavern);
     this.heroPower = heroPower;
+    this.secrets = secrets.slice();
     this.head = null;
     this.nextAttacker = null;
     this.specialMinions = new Set(); // effect depends on other minions on the board
     this.deadMechs = []; // store first two mechs that die for Kangor's
+    this.fishPool = []; // deathrattles of minions that died so far for Fish of N'Zoth
     this.length = function () {
         var count = 0;
         var currNode = this.head;
@@ -100,7 +102,7 @@ function Warband(health, tavern, heroPower) {
     }
     // returns a copy of this warband
     this.copy = function () {
-        var copy = new Warband(this.health, this.tavern, this.heroPower);
+        var copy = new Warband(this.health, this.tavern, this.heroPower, this.secrets.slice());
         var currNode = this.head;
         while (currNode != null) {
             copy.insertLast(currNode.copy());
@@ -175,6 +177,16 @@ function Warband(health, tavern, heroPower) {
         var currNode = this.head;
         while (currNode != null) {
             if (currNode.status == 'dead') {
+
+                // redemption triggers before any deathrattle summon/reborn (?)
+                if (this.secrets.includes("Redemption")) { // this.length() < 7 always holds because this minion only just died?
+                    var redeemedMinion = currNode.freshCopy();
+                    redeemedMinion.health = 1;
+                    summon([redeemedMinion], currNode);
+                    this.secrets.splice(this.secrets.indexOf("Redemption"), 1);
+                    currentLog += "Redemption triggers, reviving " + currNode.name + ".\n";
+                }
+
                 if (true || deathrattleNames.includes(currNode.name)) { // ALWAYS execute this (non-DRs can also have plants/bots)
                     this.triggerOneDeathrattle(currNode);
                 }
@@ -187,6 +199,16 @@ function Warband(health, tavern, heroPower) {
                     rebornMinion.hasReborn = false;
                     summon([rebornMinion], currNode);
                 }
+
+                // handle Fish of N'zoth here. Important to do it after deathratlle() calls such that if currNode == fish i can double (triple) the fish pool here
+                if (allDeathrattleNames.includes(currNode.name)) {
+                    var goldIndicator = currNode.isGolden ? "2" : "";
+                    this.fishPool.push(currNode.name + goldIndicator);
+                } else if (currNode.name == "Fish of N'Zoth") {
+                    var fishPoolCopy = this.fishPool.slice();
+                    this.fishPool = this.fishPool.concat(fishPoolCopy); // double
+                    if (currNode.isGolden) this.fishPool = this.fishPool.concat(fishPoolCopy); // triple
+                }
             }
             currNode.lastChild = currNode; // probably not needed because dead
             currNode = currNode.next;
@@ -194,7 +216,7 @@ function Warband(health, tavern, heroPower) {
     };
     // trigger this deathrattle (handles baron)
     this.triggerOneDeathrattle = function (DRMinion) {
-        deathrattle(DRMinion);
+        deathrattle(DRMinion, "");
         // Trigger DR once more if there is a Baron on board
         var baronOnBoard = false;
         var goldenBaronOnBoard = false;
@@ -209,10 +231,10 @@ function Warband(health, tavern, heroPower) {
             }
         }
         if (goldenBaronOnBoard) {
-            deathrattle(DRMinion);
-            deathrattle(DRMinion);
+            deathrattle(DRMinion, "");
+            deathrattle(DRMinion, "");
         } else if (baronOnBoard) {
-            deathrattle(DRMinion);
+            deathrattle(DRMinion, "");
         }
     }
     // assuming a non-empty LL containing this.nextAttacker, returns the next attacker in sequence or else null
@@ -300,12 +322,12 @@ function Warband(health, tavern, heroPower) {
         return result;
 
     }
-    // Find the first minion with >0 attack, or else null
+    // Find the first alive minion with >0 attack, or else null
     this.findInitialAttacker = function () {
         var currNode = this.head;
         result = null;
         while (currNode != null) {
-            if (currNode.attack > 0) {
+            if (currNode.attack > 0 && currNode.status == "alive") {
                 result = currNode;
                 break;
             }
@@ -334,6 +356,31 @@ function Warband(health, tavern, heroPower) {
             currNode = currNode.next;
         }
         return elistras;
+    }
+    // Return the first alive minion for Illidan.
+    this.findFirstAlive = function () {
+        var res = null;
+        var currNode = this.head;
+        while (currNode != null) {
+            if (currNode.status == "alive") {
+                res = currNode;
+                break;
+            }
+            currNode = currNode.next;
+        }
+        return res;
+    }
+    // Return the last alive minion for Illidan.
+    this.findLastAlive = function () {
+        var res = null;
+        var currNode = this.head;
+        while (currNode != null) {
+            if (currNode.status == "alive") {
+                res = currNode; // no break only difference?! If only 1 minion on board illidan will make it attack twice (?)
+            }
+            currNode = currNode.next;
+        }
+        return res;
     }
 
 }
@@ -366,7 +413,7 @@ function Minion(name, isGolden, side, attack, health, tribe, hasTaunt, hasDS, ha
         return copy;
     };
     // returns a vanilla copy (i.e. forgetting any buffs, so just 
-    //use the arguments that were passed to the constructor?) -> for kangor's
+    // use the arguments that were passed to the constructor?) -> for kangor's
     this.freshCopy = function () {
         return (name == "Token") ? new Minion(name, isGolden, side, attack, health, tribe, hasTaunt, hasDS, hasReborn, hasPoison, hasWindfury, numPlants, numBots)
             : plainMinion(name, side, isGolden);
@@ -457,8 +504,23 @@ function getInputBoard() {
     var heroPowerA = document.getElementById("hp_a").value;
     var heroPowerB = document.getElementById("hp_b").value;
 
-    var inputA = new Warband(healthA, tavernA, heroPowerA);
-    var inputB = new Warband(healthB, tavernB, heroPowerB);
+    var elem = document.getElementById("secrets_a");
+    var secretsA = [];
+    if (heroPowerA == "Akazamzarak") {
+        for (var checkbox of elem.children[1].children) {
+            if (checkbox.checked) secretsA.push(checkbox.value);
+        }
+    }
+    var elem = document.getElementById("secrets_b");
+    var secretsB = [];
+    if (heroPowerB == "Akazamzarak") {
+        for (var checkbox of elem.children[1].children) {
+            if (checkbox.checked) secretsB.push(checkbox.value);
+        }
+    }
+
+    inputA = new Warband(healthA, tavernA, heroPowerA, secretsA);
+    inputB = new Warband(healthB, tavernB, heroPowerB, secretsB);
     for (var i = 8 - numA; i <= 6 + numA; i += 2) {
         /*var name = afterSpace(document.getElementById('a' + i).children[0].id);
         var minion = M.get(name);
@@ -530,7 +592,7 @@ function simulate() {
     bestLog = "";
     worstLog = "";
 
-    var [inputA, inputB] = getInputBoard();
+    [inputA, inputB] = getInputBoard();
     //inputA.print();
     //inputB.print();
 
@@ -559,23 +621,9 @@ function simulate() {
         dmgA = dmgB = 0;
         A = inputA.copy();
         B = inputB.copy();
-        A.nextAttacker = A.findInitialAttacker();
-        B.nextAttacker = B.findInitialAttacker();
-        if (A.nextAttacker == null) {
-            // A has no minions or only eggs. If B does too, then termination will be detected in runSimulation()
-            turn = "b";
-        } else if (B.nextAttacker == null) {
-            turn = "a";
-        } else if (A.length() > B.length()) {
-            turn = "a";
-        } else if (A.length() < B.length()) {
-            turn = "b";
-        } else {
-            turn = (randomInt(2) == 0) ? "a" : "b";
-        }
-        currentLog += ((turn == 'a') ? "Opponent goes" : "You go") + " first.\n";
-        [attacker, defender] = (turn == 'a') ? [A, B] : [B, A];
+
         var result = runSimulation();
+
         results[result]++;
         if (diedA) lethalOdds[1]++;
         if (diedB) lethalOdds[0]++;
@@ -725,7 +773,48 @@ function checkTermination() {
 function runSimulation() {
 
     var firstAttack = true;
+
+    // Summon Y'Shaarj minion (Do it here because will need to know it to determine who goes first, and if empty board then the Y'Shaarj unit will be the first attacker)
+    if (A.heroPower == "Y'Shaarj" && A.length() < 7 && B.heroPower == "Y'Shaarj" && B.length() < 7) {
+        A.insertLast(plainMinion(randomTierDrop(A.tavern), 'a', false));
+        B.insertLast(plainMinion(randomTierDrop(B.tavern), 'b', false)); // Order never matters (?)
+    } else if (A.heroPower == "Y'Shaarj" && A.length() < 7) {
+        A.insertLast(plainMinion(randomTierDrop(A.tavern), 'a', false));
+    } else if (B.heroPower == "Y'Shaarj" && B.length() < 7) {
+        B.insertLast(plainMinion(randomTierDrop(B.tavern), 'b', false));
+    }
+
     startOfCombat();
+    status = checkTermination();
+    if (status != -1) {
+        if (firstFight) {
+            console.log("Final board state:");
+            console.log(A.toString());
+            console.log(B.toString());
+        }
+        //currentLog += "Final board state:\n";
+        currentLog += "\n### " + A.toString() + "\n";
+        currentLog += "### " + B.toString() + "\n";
+        return status;
+    }
+
+    A.nextAttacker = A.findInitialAttacker();
+    B.nextAttacker = B.findInitialAttacker();
+    if (A.nextAttacker == null) {
+        // A has no minions or only eggs. If B does too, then termination will be detected in runSimulation()
+        turn = "b";
+    } else if (B.nextAttacker == null) {
+        turn = "a";
+    } else if (A.length() > B.length()) {
+        turn = "a";
+    } else if (A.length() < B.length()) {
+        turn = "b";
+    } else {
+        turn = (randomInt(2) == 0) ? "a" : "b";
+    }
+    currentLog += ((turn == 'a') ? "\nOpponent goes" : "\nYou go") + " first.\n";
+    [attacker, defender] = (turn == 'a') ? [A, B] : [B, A];
+
 
     while (true) {
         if (firstFight) {
@@ -753,6 +842,65 @@ function runSimulation() {
                 }
             }
         }
+
+        attack(hitter);
+
+        status = checkTermination();
+        if (status != -1) {
+            if (firstFight) {
+                console.log("Final board state:");
+                console.log(A.toString());
+                console.log(B.toString());
+            }
+            //currentLog += "Final board state:\n";
+            currentLog += "\n### " + A.toString() + "\n";
+            currentLog += "### " + B.toString() + "\n";
+            return status;
+        }
+
+        var defenderNewAttacker;
+        // For the very first attack there is no need to advance the attack pointer (want left-most minion)
+        //... unless the first attacker already died
+        if (firstAttack && defender.nextAttacker != null && defender.nextAttacker.status == "alive") {
+            defenderNewAttacker = defender.nextAttacker;
+        } else {
+            defenderNewAttacker = defender.findNextAttacker();
+        }
+        firstAttack = false;
+
+        if (firstFight && defenderNewAttacker != null) console.log("The next attacker is " + defenderNewAttacker.name);
+        //console.log("Defender next attacker: " + defenderNewAttacker);
+        if (defenderNewAttacker != null) {
+            //if (firstFight) console.log("It's the other guy's turn now");
+            // opponent can attack, his turn is next
+            defender.nextAttacker = defenderNewAttacker;
+            turn = (turn == 'a') ? 'b' : 'a';
+            [attacker, defender] = [defender, attacker];
+            defender.cleanUp();
+        } else {
+            if (firstFight) console.log("Wow, it's my turn again.");
+            // opponent can't attack, we go again. If we cannot attack either, the fight must be over
+            attacker.nextAttacker = attacker.findNextAttacker();
+            attacker.cleanUp();
+        }
+
+
+        // Note: Can only call cleanup after updating this player's next attacker, so not after each ply.
+        // However, need to remove logically dead minions from specialMinions as their effect cannot longer
+        // apply. Probably need to do this in attack()
+        A.cleanSpecialMinions();
+        B.cleanSpecialMinions();
+
+    }
+
+}
+
+// Makes the input minion carry out one attack
+function attack(hitter) {
+
+    // attack (mega-)windfury many times in succession, then switch
+    while (hitter.windfuryCounter-- > 0 && hitter.status == "alive") {
+
         var target;
         if (hitter.name == "Zapp Slywick") {
             target = defender.findZappTarget();
@@ -760,7 +908,7 @@ function runSimulation() {
             target = defender.findTarget(); // since the fight is not over this must return some minion
         }
 
-        //if (firstFight) console.log(turn + " is attacking: " + hitter.name + " -> " + target.name);
+        if (firstFight) console.log(turn + " is attacking: " + hitter.name + " -> " + target.name);
         whenAttack(hitter, target);
         whenSthAttacks(hitter);
 
@@ -782,78 +930,114 @@ function runSimulation() {
         //console.log("After the attack the list lengths are A: " + A.length() + " and B:" + B.length());
         status = checkTermination();
         if (status != -1) {
-            if (firstFight) {
-                console.log("Final board state:");
-                console.log(A.toString());
-                console.log(B.toString());
-            }
-            //currentLog += "Final board state:\n";
-            currentLog += "\n### " + A.toString() + "\n";
-            currentLog += "### " + B.toString() + "\n";
-            return status;
+            return;
         }
-
-        //if (firstFight) console.log("After hit and collectDead:");
-        //if (firstFight) {A.print(); B.print()};
-        //A.printComplete();
-        //B.printComplete();
-
-        hitter.windfuryCounter--;
-        if (hitter.status == 'alive' && hitter.windfuryCounter > 0) {
-            // The current hitter can attack again.
-            if (firstFight) console.log("The next attack (Windfury!) is " + hitter.name + " again.");
-
-        } else {
-            // The current hitter either died or cannot attack again -> Switch to opponent if possible.
-
-            var num = 1;
-            if (windfuryNames.includes(hitter.name)) {
-                num *= 2;
-                if (hitter.isGolden && windfuryNames.includes(hitter.name)) num *= 2; // Mega-windfury (but golden amalgadon doesn't get it)
-            }
-            hitter.windfuryCounter = num; // reset counter
-
-
-            var defenderNewAttacker;
-            // For the very first attack there is no need to advance the attack pointer (want left-most minion)
-            //... unless the first attacker already died
-            if (firstAttack && defender.nextAttacker != null && defender.nextAttacker.status == "alive") {
-                defenderNewAttacker = defender.nextAttacker;
-            } else {
-                defenderNewAttacker = defender.findNextAttacker();
-            }
-            firstAttack = false;
-
-            if (firstFight && defenderNewAttacker != null) console.log("The next attacker is " + defenderNewAttacker.name);
-            //console.log("Defender next attacker: " + defenderNewAttacker);
-            if (defenderNewAttacker != null) {
-                //if (firstFight) console.log("It's the other guy's turn now");
-                // opponent can attack, his turn is next
-                defender.nextAttacker = defenderNewAttacker;
-                turn = (turn == 'a') ? 'b' : 'a';
-                [attacker, defender] = [defender, attacker];
-                defender.cleanUp();
-            } else {
-                if (firstFight) console.log("Wow, it's my turn again.");
-                // opponent can't attack, we go again. If we cannot attack either, the fight must be over
-                attacker.nextAttacker = attacker.findNextAttacker();
-                attacker.cleanUp();
-            }
-
-        }
-
-        // Note: Can only call cleanup after updating this player's next attacker, so not after each ply.
-        // However, need to remove logically dead minions from specialMinions as their effect cannot longer
-        // apply.
-        A.cleanSpecialMinions();
-        B.cleanSpecialMinions();
 
     }
 
+    // The current hitter either died or cannot attack again -> Switch to opponent if possible.
+    var num = 1;
+    if (windfuryNames.includes(hitter.name)) {
+        num *= 2;
+        if (hitter.isGolden && windfuryNames.includes(hitter.name)) num *= 2; // Mega-windfury (but golden amalgadon doesn't get it)
+    }
+    hitter.windfuryCounter = num; // reset counter
+
 }
+
 
 // what happens at the beginning of the fight, before the first attack
 function startOfCombat() {
+
+    // Apply start of combat aura buffs
+    for (var specialMinion of A.specialMinions) {
+        if (auraMinions.includes(specialMinion.name)) auraBuffAll(specialMinion);
+    }
+    for (var specialMinion of B.specialMinions) {
+        if (auraMinions.includes(specialMinion.name)) auraBuffAll(specialMinion);
+    }
+
+    // Apply deathwing buffs
+    var addedAttack = 0;
+    if (A.heroPower == "Deathwing") addedAttack += 2;
+    if (B.heroPower == "Deathwing") addedAttack += 2;
+    if (addedAttack > 0) {
+        var currNode = A.head;
+        while (currNode != null) {
+            if (currNode.status == "alive") currNode.attack += addedAttack;
+            currNode = currNode.next;
+        }
+        currNode = B.head;
+        while (currNode != null) {
+            if (currNode.status == "alive") currNode.attack += addedAttack;
+            currNode = currNode.next;
+        }
+    }
+
+    /* 
+    Illidan Questions:
+    Happens before Red Whelps?
+    What if left attacker kills right attacker, e.g. leftmost ghoul attacks, dies, and kills rightmost spore
+    Will it make an egg attack or will the outermost non-zero attack minion get to attack?
+    Probably need to add a function that carries out an attack once the attacker is known, illidan (and immediately attacking pirates) would call that in order to
+    not interfere with the normal alternating (up to windfury) flow of attacks.
+    */
+
+    if (checkTermination() != -1) return;
+
+
+
+    if (A.heroPower == "Illidan Stormrage" && B.heroPower == "Illidan Stormrage") {
+        currentLog += "\n### " + A.toString() + "\n";
+        currentLog += "### " + B.toString() + "\n";
+        if (randomInt(2) == 0) {
+            currentLog += "Your opponent's Illidan hero power triggers.\n";
+            [attacker, defender] = [A, B];
+            attack(A.findFirstAlive());
+            if (checkTermination() != -1) return;
+            attack(A.findLastAlive());
+            if (checkTermination() != -1) return;
+            currentLog += "\n### " + A.toString() + "\n";
+            currentLog += "### " + B.toString() + "\n";
+            currentLog += "Your Illidan hero power triggers.\n";
+            [attacker, defender] = [B, A];
+            attack(B.findFirstAlive());
+            if (checkTermination() != -1) return;
+            attack(B.findLastAlive());
+        } else {
+            currentLog += "Your Illidan hero power triggers.\n";
+            [attacker, defender] = [B, A];
+            attack(B.findFirstAlive());
+            if (checkTermination() != -1) return;
+            attack(B.findLastAlive());
+            if (checkTermination() != -1) return;
+            currentLog += "\n### " + A.toString() + "\n";
+            currentLog += "### " + B.toString() + "\n";
+            currentLog += "Your opponent's Illidan hero power triggers.\n";
+            [attacker, defender] = [A, B];
+            attack(A.findFirstAlive());
+            if (checkTermination() != -1) return;
+            attack(A.findLastAlive());
+        }
+    } else if (A.heroPower == "Illidan Stormrage") {
+        currentLog += "\n### " + A.toString() + "\n";
+        currentLog += "### " + B.toString() + "\n";
+        currentLog += "Your opponent's Illidan hero power triggers.\n";
+        [attacker, defender] = [A, B];
+        attack(A.findFirstAlive());
+        if (checkTermination() != -1) return;
+        attack(A.findLastAlive());
+    } else if (B.heroPower == "Illidan Stormrage") {
+        currentLog += "\n### " + A.toString() + "\n";
+        currentLog += "### " + B.toString() + "\n";
+        currentLog += "Your Illidan hero power triggers.\n";
+        [attacker, defender] = [B, A];
+        //console.log("Illidan makes the left most minion attack: It is " + B.findFirstAlive().name);
+        attack(B.findFirstAlive());
+        if (checkTermination() != -1) return;
+        attack(B.findLastAlive());
+    }
+
 
     // Alive red whelps trigger their effect. Order: Just like minion attack order during fights. DRs trigger in between.
     // Only initial dragon count matters https://youtu.be/JiRNz35saLk?t=735 
@@ -888,6 +1072,11 @@ function startOfCombat() {
     var theirIndex = 0;
 
     while (myIndex < myWhelps.length || theirIndex < theirWhelps.length) {
+
+        // Need to do a termination check here: May have wiped the entire enemy board with first spit already...
+        var status = checkTermination();
+        //console.log("The status is " + status);
+        if (status != -1) return status;
 
         // if it's my turn, find the next alive red whelp: it spits
         if (myTurn) {
@@ -934,15 +1123,6 @@ function startOfCombat() {
     }
 
     // Note: With whelps can no longer assume that the first minion of the player going first can attack. (It may die to a whelp)
-
-
-    // Apply start of combat aura buffs
-    for (var specialMinion of attacker.specialMinions) {
-        if (auraMinions.includes(specialMinion.name)) auraBuffAll(specialMinion);
-    }
-    for (var specialMinion of defender.specialMinions) {
-        if (auraMinions.includes(specialMinion.name)) auraBuffAll(specialMinion);
-    }
 
 }
 
@@ -1125,7 +1305,7 @@ function hitSimultaneously(X, Y) {
     if (Y.name == "Yo-Ho-Ogre" && Y.health > 0) {
         var myBand = (X.side == 'a') ? A : B;
         var target = myBand.findTarget();
-        if (target != null) hitSimultaneously(Y, target);
+        if (target != null) hitSimultaneously(Y, target); // this should probably be attack (so it attacks twice if you give a dog a bone it windfury?)
     }
 
 }
@@ -1175,6 +1355,11 @@ function summon(minions, afterMinion) {
             for (var specialMinion of myBand.specialMinions) {
                 auraBuff(specialMinion, minions[i]);
             }
+            // Apply deathwing buffs (also aura -> only apply to base copy)
+            var addedAttack = 0;
+            if (A.heroPower == "Deathwing") addedAttack += 2;
+            if (B.heroPower == "Deathwing") addedAttack += 2;
+            minions[i].attack += addedAttack;
             summonedMinions.push(minions[i]);
 
             var num = Math.min(numCopies, 7 - myBand.length());
@@ -1205,8 +1390,8 @@ function summon(minions, afterMinion) {
 
 
 
-// Trigger the input minion's deathrattle
-function deathrattle(minion) {
+// Trigger the input minion's deathrattle. If fishName != "", then minion is a fish and fishName is one copied deathrattle minion's name
+function deathrattle(minion, fishName) {
 
     var myBand = (minion.side == 'a') ? A : B;
     var theirBand = (minion.side == 'a') ? B : A;
@@ -1224,7 +1409,17 @@ function deathrattle(minion) {
     //if (minionsToSummon.length > 0) console.log("summoning extra stuff!!!!");
     var factor = (minion.isGolden) ? 2 : 1;
 
-    switch (minion.name) {
+    if (fishName != "") {
+        if (fishName[fishName.length - 1] == "2") {
+            factor = 2;
+            fishName = fishName.slice(0, -1); // removes the trailing 2 indicating goldenness
+        } else {
+            factor = 1;
+        }
+    }
+    var deathrattleName = (fishName == "") ? minion.name : fishName;
+
+    switch (deathrattleName) {
         case "Kindly Grandmother":
             minionsToSummon.unshift(new Minion("Token", false, minion.side, 3 * factor, 2 * factor, "beast", false, false, false, false, false, 0, 0));
             break;
@@ -1393,7 +1588,13 @@ function deathrattle(minion) {
             break;
         case "Ghastcoiler":
             var num = 2 * factor;
-            while (num--) minionsToSummon.unshift(plainMinion(randomEntry(deathrattleNames), minion.side, false));
+            var availableDeathrattles = [];
+            for (var card of deathrattleNames) {
+                var unit = M.get(card);
+                if (unit["tribePool"] == undefined || document.getElementById("tribe_" + unit["tribePool"]).checked) availableDeathrattles.push(card);
+            }
+            //if (firstFight) console.log(availableDeathrattles);
+            while (num--) minionsToSummon.unshift(plainMinion(randomEntry(availableDeathrattles), minion.side, false));
             break;
         case "Gentle Djinni":
             var num = 1 * factor;
@@ -1405,16 +1606,38 @@ function deathrattle(minion) {
             break;
         case "Sneed's Old Shredder":
             var num = 1 * factor;
-            while (num--) minionsToSummon.unshift(plainMinion(randomEntry(legendaryCards), minion.side, false));
+            var availableLegendaries = [];
+            for (var card of legendaryCards) {
+                var unit = M.get(card);
+                if (unit["tribePool"] == undefined || document.getElementById("tribe_" + unit["tribePool"]).checked) availableLegendaries.push(card);
+            }
+            //if (firstFight) console.log(availableLegendaries);
+            while (num--) minionsToSummon.unshift(plainMinion(randomEntry(availableLegendaries), minion.side, false));
             break;
         case "Piloted Shredder":
             var num = 1 * factor;
-            while (num--) minionsToSummon.unshift(plainMinion(randomEntry(twoManaCards), minion.side, false));
+            var availableTwoDrops = [];
+            for (var card of twoManaCards) {
+                var unit = M.get(card);
+                if (unit["tribePool"] == undefined || document.getElementById("tribe_" + unit["tribePool"]).checked) availableTwoDrops.push(card);
+            }
+            //if (firstFight) console.log(availableTwoDrops);
+            while (num--) minionsToSummon.unshift(plainMinion(randomEntry(availableTwoDrops), minion.side, false));
             break;
         case "Kangor's Apprentice":
             var num = Math.min(2 * factor, myBand.deadMechs.length);
             for (var i = num - 1; i >= 0; i--) { // s.t. resummoned in order of death
                 minionsToSummon.unshift(myBand.deadMechs[i].freshCopy());
+            }
+            break;
+        case "Fish of N'Zoth":
+            // execute all deathrattles in fishPool. Multiplying them for future fishes happens later, in triggerDeathrattle()
+            // not sure about trigger order regarding baron / golden fish / multiple deathrattles.
+            // As implemented now (golden fish/golden baron): trigger fishPool twice, three times.
+            // (More likely but need to change a lot of code: for each deathrattle in fishPool, trigger it twice, three times)
+            var num = minion.isGolden ? 2 : 1;
+            while (num--) {
+                for (var drName of myBand.fishPool) deathrattle(minion, drName);
             }
             break;
 
@@ -1448,6 +1671,14 @@ function whenSthSummoned(minion) {
     var myBand = (minion.side == 'a') ? A : B;
     var theirBand = (minion.side == 'a') ? B : A;
     var factor = minion.isGolden ? 2 : 1;
+
+    // Apply Greybough buff
+    if (myBand.heroPower == "Greybough") {
+        minion.attack += 1;
+        minion.health += 2;
+        minion.hasTaunt = true;
+    }
+
 
     for (var specialMinion of myBand.specialMinions) {
         switch (specialMinion.name) {
@@ -1624,6 +1855,14 @@ function whenSthDies(minion) {
         myBand.deadMechs.push(minion);
     }
 
+    if (myBand.secrets.includes("Avenge") && myBand.length() > 0) {
+        var buffedMinion = myBand.randomAlive();
+        buffedMinion.attack += 3;
+        buffedMinion.health += 2;
+        myBand.secrets.splice(myBand.secrets.indexOf("Avenge"), 1);
+        currentLog += "Avenge triggers, granting " + buffedMinion.name + " +3/+2.\n";
+    }
+
 }
 
 
@@ -1701,6 +1940,7 @@ function whenAttack(X, Y) {
                     specialMinion.health += 1 * factor;
                     break;
                 case "Tormented Ritualist":
+                    if (Y != specialMinion) break;
                     for (var neighbor of theirBand.neighbors(Y)) {
                         neighbor.attack += 1 * factor;
                         neighbor.health += 1 * factor;
@@ -1710,6 +1950,36 @@ function whenAttack(X, Y) {
         }
     }
 
+    if (theirBand.secrets.includes("Autodefense Matrix") && !Y.hasDS) {
+        Y.hasDS = true;
+        theirBand.secrets.splice(theirBand.secrets.indexOf("Autodefense Matrix"), 1);
+        currentLog += "Autodefense Matrix triggers, granting " + Y.name + " Divine Shield.\n";
+    }
+    if (theirBand.secrets.includes("Splitting Image") && theirBand.length() < 7) {
+        summon([Y.copy()], Y);
+        theirBand.secrets.splice(theirBand.secrets.indexOf("Splitting Image"), 1);
+        currentLog += "Splitting Image triggers, copying " + Y.name + ".\n";
+    }
+
+    if (theirBand.secrets.includes("Snake Trap") && theirBand.length() < 7) {
+        var lastMinion = theirBand.findLastAlive();
+        var num = 3;
+        var minionsToSummon = [];
+        while (num--) minionsToSummon.unshift(new Minion("Token", false, Y.side, 1, 1, "beast", false, false, false, false, false, 0, 0));
+        summon(minionsToSummon, lastMinion);
+        theirBand.secrets.splice(theirBand.secrets.indexOf("Snake Trap"), 1);
+        currentLog += "Snake Trap triggers.\n";
+    }
+
+    if (theirBand.secrets.includes("Venomstrike Trap") && theirBand.length() < 7) {
+        var lastMinion = theirBand.findLastAlive();
+        var num = 1;
+        var minionsToSummon = [];
+        while (num--) minionsToSummon.unshift(new Minion("Token", false, Y.side, 2, 3, "beast", false, false, false, true, false, 0, 0));
+        summon(minionsToSummon, lastMinion);
+        theirBand.secrets.splice(theirBand.secrets.indexOf("Venomstrike Trap"), 1);
+        currentLog += "Venomstrike Trap triggers.\n";
+    }
 
 }
 
@@ -1821,4 +2091,27 @@ function whenOverkill(X, Y) {
 
     X.lastChild = X;
 
+}
+
+// Return a random draftable minion'name of input tier
+function randomTierDrop(tier) {
+    var tierDrops = [];
+    for (var minion of minions) {
+        if (!uncollectibleMinions.includes(minion["name"]) && minion["techLevel"] == tier) {
+            /*
+            var tribe = plainMinion(minion["name"]).tribe;
+            if (tribe == [] || tribe[0] == "none" || tribe.includes("all"))  { 
+                tierDrops.push(minion["name"]);
+            } else {
+                var upper = tribe[0].charAt(0).toUpperCase() + tribe[0].slice(1);
+                if (upper == "Mechanical") upper = "Mech";
+                if (document.getElementById("tribe_" + upper).checked) tierDrops.push(minion["name"]);
+            }
+*/
+            //onsole.log(minion["tribePool"]);
+            var unit = M.get(minion["name"]);
+            if (unit["tribePool"] == undefined || document.getElementById("tribe_" + unit["tribePool"]).checked) tierDrops.push(unit["name"]);
+        }
+    }
+    return randomEntry(tierDrops);
 }
