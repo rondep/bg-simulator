@@ -4,7 +4,7 @@ var numB = 0;
 var M = new Map(); // maps card names to their json entry
 var selectedTier = 1;
 var canvasVariable;
-var tags = ["Beast", "Demon", "Dragon", "Elemental", "Mech", "Murloc", "Pirate", "Rest"];
+var tags = ["Beast", "Demon", "Dragon", "Elemental", "Mech", "Murloc", "Pirate", "Quilboar", "Rest"];
 
 for (var i = 0; i < minions.length; i++) {
     M.set(minions[i]["name"], minions[i]);
@@ -20,6 +20,7 @@ function find(text) {
 
 pirateNames = [];
 for (var i = 0; i < minions.length; i++) {
+    if (minions[i].name == "Amalgam") continue;
     if (minions[i]["race"].toLowerCase() == "pirate" || minions[i]["race"].toLowerCase() == "all") pirateNames.push(minions[i].name);
 }
 
@@ -49,7 +50,7 @@ for (var i = 0; i < minions.length; i++) {
 }
 
 dsNames = [];
-dsExceptions = ["Selfless Hero", "Drakonid Enforcer", "Nadina the Red"];
+dsExceptions = ["Selfless Hero", "Drakonid Enforcer", "Nadina the Red", "Tough Tusk"];
 for (var i = 0; i < minions.length; i++) {
     if (minions[i]["normalText"].toLowerCase().includes("divine shield") && !dsExceptions.includes(minions[i]["name"])) {
         dsNames.push(minions[i].name);
@@ -79,7 +80,7 @@ specialMinions = onSummonMinions.concat(onAttackMinions, onDSLossMinions, onDeat
 
 uncollectibleMinions = ["Amalgam", "Fish of N'Zoth"];
 
-windfuryNames = ["Crackling Cyclone", "Seabreaker Goliath", "Zapp Slywick"];
+windfuryNames = ["Crackling Cyclone", "Seabreaker Goliath", "Zapp Slywick", "Bonker", "Bristleback Knight"];
 
 twoManaCards = [];
 for (var i = 0; i < minions.length; i++) {
@@ -492,6 +493,11 @@ function Card(name, band, index, isGolden, attack, health, hasTaunt, hasDS, hasR
     this.numBots = numBots;
 }
 
+// select all the text of the input text element
+function selectAll(id) {
+    console.log(id);
+    document.getElementById(id).select();
+}
 
 // returns the created canvas
 function createCanvas(band, index, card) {
@@ -541,6 +547,9 @@ function createCanvas(band, index, card) {
     attackInput.classList.add("cardInput");
     attackInput.addEventListener('change', validateInput);
     attackInput.value = card.attack;
+    //attackInput.onclick = "this.select()"; // this doesn't work. need to call setattribute...
+    attackInput.setAttribute("onclick", "this.select()");
+    //attackInput.addEventListener('click', selectAll(labelCounter++));
     var attackText = document.createTextNode(" Attack ");
     data1.appendChild(attackInput);
     data1.appendChild(attackText);
@@ -548,6 +557,7 @@ function createCanvas(band, index, card) {
     healthInput.classList.add("cardInput");
     healthInput.addEventListener('change', validateInput);
     healthInput.value = card.health;
+    healthInput.setAttribute("onclick", "this.select()");
     var healthText = document.createTextNode(" Health");
     data1.appendChild(healthInput);
     data1.appendChild(healthText);
@@ -701,7 +711,7 @@ function showGallery() {
         }
     */
     var tribeMinions = findMinions(selectedTier);
-    for (var tribe = 0; tribe < 8; tribe++) {
+    for (var tribe = 0; tribe < tags.length; tribe++) {
         if (tribeMinions[tribe].length == 0 || (tags[tribe] != "Rest" && !document.getElementById("tribe_" + tags[tribe]).checked)) continue;
         var node = document.createTextNode(tags[tribe]);
         gallery.appendChild(node);
@@ -745,10 +755,10 @@ function findTribeMinions(tribe_orig, tribe, tier) { // tribe_orig is only diffe
 // return an array of arrays containing the minions by tribe, and the 8-th entry is those without tribe
 function findMinions(tier) {
     var result = [];
-    var tribes_orig = ["BEAST", "DEMON", "DRAGON", "ELEMENTAL", "MECHANICAL", "MURLOC", "PIRATE"];
-    var tribes = ["Beast", "Demon", "Dragon", "Elemental", "Mech", "Murloc", "Pirate"];
+    var tribes_orig = ["BEAST", "DEMON", "DRAGON", "ELEMENTAL", "MECHANICAL", "MURLOC", "PIRATE", "QUILBOAR"];
+    var tribes = ["Beast", "Demon", "Dragon", "Elemental", "Mech", "Murloc", "Pirate", "Quilboar"];
     var nonNeutrals = [];
-    for (var i = 0; i < 7; i++) {
+    for (var i = 0; i < tribes.length; i++) {
         var tribeUnits = findTribeMinions(tribes_orig[i], tribes[i], tier);
         result.push(tribeUnits);
         nonNeutrals = nonNeutrals.concat(tribeUnits);
