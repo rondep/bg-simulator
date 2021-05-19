@@ -10,6 +10,7 @@
     <script src="minionInfo.js" defer></script>
     <script src="main.js" defer></script>
     <script src="simulation.js" defer></script>
+    <script data-ad-client="ca-pub-4854911269867191" async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js"></script>
 </head>
 
 <body ondragover="allowDrop(event)" onload="loadAllImages()" id="rest">
@@ -142,7 +143,7 @@
                         <div id="secrets_a"></div>
                     </div>
                     <div class="export">
-                        <input id="import_a" class="exportInput">
+                        <input id="import_a" onclick="this.select()" class="exportInput">
                         <button id="importButtonA" onclick="importComp('a')">Import</button>
                         <button id="exportA" onclick="exportComp('a')">Export</button>
                     </div>
@@ -185,7 +186,7 @@
                         <div id="secrets_b"></div>
                     </div>
                     <div class="export">
-                        <input id="import_b" class="exportInput">
+                        <input id="import_b" onclick="this.select()" class="exportInput">
                         <button id="importButtonB" onclick="importComp('b')">Import</button>
                         <button id="exportB" onclick="exportComp('b')">Export </button>
                     </div>
@@ -234,6 +235,7 @@
                     <input type="checkbox" class="tribeButton" checked="true" id="tribe_Mech" onclick="showGallery()">Mech</button><br>
                     <input type="checkbox" class="tribeButton" checked="true" id="tribe_Murloc" onclick="showGallery()">Murloc</button><br>
                     <input type="checkbox" class="tribeButton" checked="true" id="tribe_Pirate" onclick="showGallery()">Pirate</button><br>
+                    <input type="checkbox" class="tribeButton" checked="true" id="tribe_Quilboar" onclick="showGallery()">Quilboar</button><br>
                 </form>
             </div>
 
