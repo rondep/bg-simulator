@@ -401,6 +401,7 @@ function Minion(name, isGolden, side, attack, health, tribe, hasTaunt, hasDS, ha
     this.numPlants = numPlants;
     this.numBots = numBots;
     this.windfuryCounter = (hasWindfury) ? ((isGolden && windfuryNames.includes(name)) ? 4 : 2) : 1; // Maximum number of consecutive attacks
+    this.frenzied = false;
     this.status = "alive";
     this.next = null;
     this.prev = null;
@@ -1906,9 +1907,12 @@ function whenDamaged(minion) {
             }
             summon(minionsToSummon, minion);
             break;
+        case "Bristleback Knight":
+            if (minion.frenzied == false) minion.hasDS = true;
     }
 
     minion.lastChild = minion; // if it gets hit again minions go directly to the right again
+    minion.frenzied = true; // frenzy triggers at most once
 
 }
 
@@ -1933,7 +1937,7 @@ function whenAttack(X, Y) {
             var factor = specialMinion.isGolden ? 2 : 1;
             switch (specialMinion.name) {
                 case "Arm of the Empire":
-                    Y.attack += 3 * factor;
+                    Y.attack += 2 * factor;
                     break;
                 case "Champion of Y'Shaarj":
                     specialMinion.attack += 1 * factor;
@@ -2071,7 +2075,7 @@ function whenOverkill(X, Y) {
             if (nbs.length == 1 || (nbs.length == 2 && !X.isGolden)) { // attacked minion only has one neighbor or wildfire is non-golden -> choose 1 out of 1 or 1 out of 2
                 var target = randomEntry(nbs);
                 hit(X, target, -Y.health); // just overkilled Y -> deal rest to random neighbor
-            } else if (nbs.slength == 2) { // and wildfire is golden -> hit both neighbors
+            } else if (nbs.length == 2) { // and wildfire is golden -> hit both neighbors
                 hit(X, nbs[0], -Y.health);
                 hit(X, nbs[1], -Y.health);
             }
